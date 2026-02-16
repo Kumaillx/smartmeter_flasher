@@ -28,7 +28,7 @@ export default function Home() {
         setLoading(true);
         setError(null);
         
-        const response = await fetch("https://your-s3-url/firmware/versions.json");
+        const response = await fetch("/api/versions");
         
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.statusText}`);

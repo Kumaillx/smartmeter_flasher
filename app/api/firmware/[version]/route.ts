@@ -9,32 +9,31 @@ const s3 = new S3Client({
   },
 });
 
-export async function GET(request: Request, { params }: { params: { version: string } }){
-    const version = params.version;
-    const files = ["bootloader.bin", "partitions.bin", "firmware.bin"];
-      const signedUrls = await Promise.all(
-    files.map(async (file) => {
-      const command = new GetObjectCommand({
-        Bucket: "custom-meter-firmware-updates",
-        Key: `factory/${version}/${file}`,
-      });
-      
-      const url = await getSignedUrl(s3, command, { expiresIn: 300 });
+export async function GET(
+  request: Request,
+  { params }: { params: { version: string } }
+) {
+  const key = `single_slot/firmware_${params.version}.bin`;
 
-      return { file, url };
-    })
-  );
+  const command = new GetObjectCommand({
+    Bucket: "custom-meter-firmware-updates",
+    Key: key,
+  });
+
+  const signedUrl = await getSignedUrl(s3, command, {
+    expiresIn: 300,
+  });
 
   return Response.json({
     name: "Smart Meter Firmware",
-    version,
+    version: params.version,
     builds: [
       {
         chipFamily: "ESP32",
         parts: [
-          { path: signedUrls[0].url, offset: 4096 },
-          { path: signedUrls[1].url, offset: 32768 },
-          { path: signedUrls[2].url, offset: 65536 },
+          { path: "/bootloader.bin", offset: 4096 },
+          { path: "/partitions.bin", offset: 32768 },
+          { path: signedUrl, offset: 65536 },
         ],
       },
     ],
